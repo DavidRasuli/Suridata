@@ -27,7 +27,6 @@ def generate_pairs(chunk, shared_pairs):
     for i, dwarf in enumerate(chunk):
         giant = list(reversed(chunk))[i]
 
-        # Exclude an employee from being paired with themselves
         if dwarf['name'] != giant['name']:
             pairs.append((dwarf['name'], giant['name']))
 
