@@ -1,5 +1,8 @@
 import random
 import multiprocessing
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(process)d] [%(threadName)s] %(message)s')
 
 def validate_and_clean(employees):
     unique_indices = set()
@@ -15,27 +18,36 @@ def validate_and_clean(employees):
     return cleaned_employees
 
 def generate_pairs(chunk, shared_pairs):
+    process_id = multiprocessing.current_process().pid
+
     random.shuffle(chunk)
 
     pairs = []
 
     for i, dwarf in enumerate(chunk):
         giant = list(reversed(chunk))[i]
-        pairs.append((dwarf['name'], giant['name']))
+
+        # Exclude an employee from being paired with themselves
+        if dwarf['name'] != giant['name']:
+            pairs.append((dwarf['name'], giant['name']))
 
     shared_pairs.extend(pairs)
 
+    logging.info(f"Process ID: {process_id}, Dwarf-Giant Pairs: {pairs}")
+
 def multiprocessing_main(employees_data, num_processes, shared_pairs):
     cleaned_employees = validate_and_clean(employees_data)
-    chunk_size = len(cleaned_employees) // num_processes
+    chunk_size = len(cleaned_employees) 
     employee_chunks = [cleaned_employees[i:i + chunk_size] for i in range(0, len(cleaned_employees), chunk_size)]
 
     processes = []
 
-    for chunk in employee_chunks:
+    for i, chunk in enumerate(employee_chunks):
         process = multiprocessing.Process(target=generate_pairs, args=(chunk, shared_pairs))
         process.start()
         processes.append(process)
+
+        logging.info(f"Started Process {i + 1} with ID {process.pid}")
 
     for process in processes:
         process.join()
@@ -59,7 +71,7 @@ def main():
         final_pairs = list(shared_pairs)
         random.shuffle(final_pairs)
 
-        print("Final Dwarf-Giant Pairs:", final_pairs)
+        logging.info("Final Dwarf-Giant Pairs: %s", final_pairs)
 
 if __name__ == "__main__":
     main()
