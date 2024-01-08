@@ -3,7 +3,7 @@ whereas each person is both a dwarf and a giant, without self circulation, and m
 
 
 
-The main method has a given test with employees.
+Please install pytest, and run test_suridata.py
 
 validate_and_clean() - A validation will take place to clean the data, making sure a unique Id could generated from the given employees.
 
