@@ -4,18 +4,31 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(process)d] [%(threadName)s] %(message)s')
 
+
 def validate_and_clean(employees):
+    if not employees:
+        raise ValueError("Empty employee list")
+
     unique_indices = set()
     cleaned_employees = []
 
     for employee in employees:
-        index = (employee["name"], employee["department"], employee["age"])
+        if not isinstance(employee, dict):
+            raise ValueError("Malfunctioned JSON")
 
-        if index not in unique_indices:
-            unique_indices.add(index)
-            cleaned_employees.append(employee)
+        index = (employee.get("name"), employee.get("department"), employee.get("age"))
+
+        if None in index:
+            raise ValueError("Empty employees array")
+
+        if index in unique_indices:
+            raise ValueError("Duplicate employee ID")
+
+        unique_indices.add(index)
+        cleaned_employees.append(employee)
 
     return cleaned_employees
+
 
 def generate_pairs(chunk, shared_pairs):
     process_id = multiprocessing.current_process().pid
@@ -24,19 +37,20 @@ def generate_pairs(chunk, shared_pairs):
 
     pairs = []
 
-    for i, dwarf in enumerate(chunk):
-        giant = list(reversed(chunk))[i]
+    for i in range(len(chunk)):
+        dwarf = chunk[i]
+        giant = chunk[(i + 1) % len(chunk)]  # Ensure circular pairing
 
-        if dwarf['name'] != giant['name']:
-            pairs.append((dwarf['name'], giant['name']))
+        pairs.append((dwarf['name'], giant['name']))
 
     shared_pairs.extend(pairs)
 
     logging.info(f"Process ID: {process_id}, Dwarf-Giant Pairs: {pairs}")
 
+
 def multiprocessing_main(employees_data, num_processes, shared_pairs):
     cleaned_employees = validate_and_clean(employees_data)
-    chunk_size = len(cleaned_employees) 
+    chunk_size = len(cleaned_employees) // num_processes
     employee_chunks = [cleaned_employees[i:i + chunk_size] for i in range(0, len(cleaned_employees), chunk_size)]
 
     processes = []
@@ -51,26 +65,7 @@ def multiprocessing_main(employees_data, num_processes, shared_pairs):
     for process in processes:
         process.join()
 
-def main():
-    employees_data = [
-        {"department": 'R&D', "name": 'emp1', "age": 46},
-        {"department": 'Sales', "name": 'emp2', "age": 28},
-        {"department": 'R&D', "name": 'emp3', "age": 33},
-        {"department": 'R&D', "name": 'emp4', "age": 29},
-    ]
 
-    with multiprocessing.Manager() as manager:
-        shared_pairs = manager.list()
+def calc_largest_integer_divisor(n):
+    return next(d for d in range(n - 1, 0, -1) if n % d == 0)
 
-        num_processes = 2
-
-        multiprocessing_main(employees_data, num_processes, shared_pairs)
-
-        # Shuffle the final pairs to ensure randomness
-        final_pairs = list(shared_pairs)
-        random.shuffle(final_pairs)
-
-        logging.info("Final Dwarf-Giant Pairs: %s", final_pairs)
-
-if __name__ == "__main__":
-    main()
