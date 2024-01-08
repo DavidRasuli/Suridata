@@ -2,6 +2,7 @@ import random
 import multiprocessing
 import logging
 import pytest
+import matplotlib.pyplot as plt
 from suridata import validate_and_clean, multiprocessing_main, calc_largest_integer_divisor
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(process)d] [%(threadName)s] %(message)s')
@@ -655,3 +656,12 @@ def test_suridata():
 
         assert all(dwarf != giant for dwarf, giant in
                    final_pairs), "A pair of dwarf/giant must contain two different employees"
+
+        draw_output(final_pairs)
+
+
+def draw_output(final_pairs):
+    xs, ys = zip(*final_pairs)
+    plt.figure()
+    plt.plot(xs, ys)
+    plt.show()
